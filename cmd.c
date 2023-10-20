@@ -10,12 +10,11 @@ char *argv[100];
 char *optv[10];
 int argc, optc;
 
+#define AC_LESS_1 -1 //명령어 인자 개수가 0 또는 1인 경우
+#define AC_ANY -100 //명령어 인자 개수 제한 없는 경우 (echo처럼)
 #define EQUAL(_s1, _s2) (strcmp(_s1, _s2) == 0) // 문자열이 같으면 ture
 #define NOT_EQUAL(_s1, _s2) (strcmp(_s1, _s2) != 0) //문자열이 다르면 ture
 
-static char *get_argv_optv(char *cmd_line) {
-	return (cmd = strtok(cmd_line, " \t\n")); 
-}
 static void print_usage(char *msg, char *cmd, char *opt, char *arg) {
 	//msg 는 "사용법 : " 글을 받음 proc_cmd() 함수 정의 보셈
 	printf("%s	%s", msg, cmd);
@@ -23,6 +22,7 @@ static void print_usage(char *msg, char *cmd, char *opt, char *arg) {
 		printf("	%s", opt);
 	printf("	%s", arg);
 	printf("\n");
+}
 
 static int check_arg(int count) {
 	if (count < 0) {
@@ -44,19 +44,19 @@ static int check_arg(int count) {
 static int check_opt(char *opt) {
 	int i, err = 0;
 	for (i = 0; i < optc; ++i) {
-		if( NOT_EQUAL(opt, optvpi)) {
+		if( NOT_EQUAL(opt, optv[i])) {
 			printf("지원되지 않는 명령어 옵션(%s)입니다. \n", optv[i]);
 			err=-1;
 		}
 	}
-	return(err)l
+	return(err);
 }
 
-void char *get_argv_optv(char *cmd_line) {
+static char *get_argv_optv(char *cmd_line) {
 	char *tok;
 	argc = optc = 0;
 
-	if ((cmd - strtok(cmd_line, " \t\n")) == NULL ) //첫 토큰 잘라 냄
+	if ((cmd = strtok(cmd_line, " \t\n")) == NULL ) //첫 토큰 잘라 냄
 		return (NULL);
 
 	for ( ; (tok = strtok(NULL, " \t\n")) != NULL; ) {
@@ -89,8 +89,6 @@ void quit(void) {
 	exit(0);// exit(0)함수는 unix가 제공해준다
 }
 
-#define AC_LESS_1 -1 //명령어 인자 개수가 0 또는 1인 경우
-#define AC_ANY -100 //명령어 인자 개수 제한 없는 경우 (echo처럼)
 
 typedef struct {
 	char *cmd;					//명령어 문자열 시작 주소
@@ -104,7 +102,7 @@ cmd_tbl_t cmd_tbl [] = {
 	{ "cp",	cp,	2,	"",	"원본파일 복사된 파일" },
 	{ "echo",	echo,	AC_ANY,	"",	"[에코할 문장]" },
 	{ "help", help, 0, "", "" },
-	{ "ls",	ls,	AC_LESS,	"-l",	"[디렉토리이름]" },
+	{ "ls",	ls,	AC_LESS_1,	"-l",	"[디렉토리이름]" },
 	{ "exit", quit, 0, "", "" },
 	{ "rm",	rm,	1,	"", "파일이름" },
 };
@@ -114,7 +112,7 @@ int num_cmd = sizeof(cmd_tbl) / sizeof(cmd_tbl[0]); // 전체크기 vs 한칸의
 void help() {
 	int k;
 	printf( "현재 지원되는 명령어 종류입니다. \n");
-	for (k = 0l k < num_cmd; ++k)
+	for (k = 0; k < num_cmd; ++k)
 		print_usage("	", cmd_tbl[k].cmd, cmd_tbl[k].opt, cmd_tbl[k].arg);
 	printf("\n");
 }
