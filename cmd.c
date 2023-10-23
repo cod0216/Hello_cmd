@@ -9,6 +9,7 @@ char *cmd;
 char *argv[100];
 char *optv[10];
 int argc, optc;
+char cur_work_dir[SZ_STR_BUF]; // 현재 디렉토리 위치 저장용
 
 #define AC_LESS_1 -1 //명령어 인자 개수가 0 또는 1인 경우
 #define AC_ANY -100 //명령어 인자 개수 제한 없는 경우 (echo처럼)
@@ -136,18 +137,22 @@ void proc_cmd() {
 	
 
 int main(int argc, char *argv[]) {
+	int cmd_count = 1;
 	char cmd_line[SZ_STR_BUF];
-
+	
 	setbuf(stdout, NULL); //표준 출력 버퍼 제거: printf()즉시 화면 출력
 	setbuf(stderr, NULL); //표준 에러 출력 버퍼 제거
 	
 	help();
-
+	getcwd(cur_work_dir, SZ_STR_BUF);
+	
 	for( ; ; ) {
-		printf("$ ");
+		printf("<%s> %d : ", cur_work_dir, cmd_count);
 		fgets(cmd_line, SZ_STR_BUF, stdin); // 키보드에서 한 행 전체를 입력 받아 cmd_line에 저장
-		if ( get_argv_optv(cmd_line) !=NULL) // 입력받은 문자를 개별 문자열로 분리
+		if ( get_argv_optv(cmd_line) !=NULL) {// 입력받은 문자를 개별 문자열로 분리
 			proc_cmd();
+			cmd_count++;
+		}
 	}
 }
 
