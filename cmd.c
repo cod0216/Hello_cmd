@@ -76,11 +76,23 @@ void cp(void) {
 }
 	
 void echo(void) {
-	printf("현재 이 명령어는 구현되지 않았습니다.\n"); 
-}
+	int i;
+	for(i = 0; i < argv[i]; i++)
+		printf("%s ", argv[i]);
+	printf("\n");
 
+}
+void hostname(void){
+	char hostname[SZ_STR_BUF];
+	gethostname(hostname, SZ_STR_BUF);
+	printf("%s \n", hostname);
+
+}
 void ls(void) {
 	printf("현재 이 명령어는 구현되지 않았습니다.\n"); 
+}
+void pwd(void) {
+	printf("%s \n", cur_work_dir); 
 }
 void rm(void) {
 	printf("현재 이 명령어는 구현되지 않았습니다.\n"); 
@@ -89,7 +101,14 @@ void rm(void) {
 void quit(void) {
 	exit(0);// exit(0)함수는 unix가 제공해준다
 }
-
+void whoami(void) {
+	char *username;
+	username = getlogin();
+	if (username == NULL)
+		printf("터미널 장치가 아니라서 사용자 계정정보를 구할 수 없습니다.\n");
+	else
+		printf("%s \n", username);
+}
 
 typedef struct {
 	char *cmd;					//명령어 문자열 시작 주소
@@ -103,9 +122,12 @@ cmd_tbl_t cmd_tbl [] = {
 	{ "cp",	cp,	2,	"",	"원본파일 복사된 파일" },
 	{ "echo",	echo,	AC_ANY,	"",	"[에코할 문장]" },
 	{ "help", help, 0, "", "" },
+	{ "hostname", hostname, 0, "", "" },
 	{ "ls",	ls,	AC_LESS_1,	"-l",	"[디렉토리이름]" },
+	{ "pwd",	pwd,	0,	"",	"" },
 	{ "exit", quit, 0, "", "" },
 	{ "rm",	rm,	1,	"", "파일이름" },
+	{ "whoami", whoami, 0, "", "" },
 };
 
 int num_cmd = sizeof(cmd_tbl) / sizeof(cmd_tbl[0]); // 전체크기 vs 한칸의 크기
