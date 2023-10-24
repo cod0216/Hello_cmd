@@ -2,6 +2,11 @@
 #include <string.h> // 문자열 비교
 #include <stdlib.h> // 메모리 관련 및 exit()
 #include <unistd.h> // 유닉스 시스템에 사용하는 표준 인터페이스
+#include <sys/stat.h>
+#include <dirent.h>
+#include <pwd.h>
+#include <grp.h>
+#include <time.h>
 
 #define SZ_STR_BUF 256 // 일반 문자열 배열의 길이
 
@@ -15,6 +20,7 @@ char cur_work_dir[SZ_STR_BUF]; // 현재 디렉토리 위치 저장용
 #define AC_ANY -100 //명령어 인자 개수 제한 없는 경우 (echo처럼)
 #define EQUAL(_s1, _s2) (strcmp(_s1, _s2) == 0) // 문자열이 같으면 ture
 #define NOT_EQUAL(_s1, _s2) (strcmp(_s1, _s2) != 0) //문자열이 다르면 ture
+#define PRINT_ERR_RET() do{ perror(cmd); return; }while(0)
 
 static void print_usage(char *msg, char *cmd, char *opt, char *arg) {
 	//msg 는 "사용법 : " 글을 받음 proc_cmd() 함수 정의 보셈
@@ -68,6 +74,87 @@ static char *get_argv_optv(char *cmd_line) {
 	}
 	return(cmd);
 }
+static void print_attr(char *path, char *fn) {
+	struct passwd *pwp;
+	struct group *grp;
+	struct stat st_buf;
+	char full_path[SZ_STR_BUF], buf[SZ_STR_BUF], c;
+	char time_buf[13];
+	struct tm *tmp;
+
+	sprintf(full_path, "%s/%s", path, fn);
+	if(lstat(full_path, &st_buf) < 0)
+			PRINT_ERR_RET();
+	if	(S_ISREG(st_buf.st_mode)) c = '-';
+	else if	(S_ISDIR(st_buf.st_mode)) c = 'd';
+	else if	(S_ISCHR(st_buf.st_mode)) c = 'c';
+	else if	(S_ISBLK(st_buf.st_mode)) c = 'b';
+	else if	(S_ISFIFO(st_buf.st_mode)) c = 'f';
+	else if	(S_ISLNK(st_buf.st_mode)) c = 'l';
+	else if	(S_ISSOCK(st_buf.st_mode)) c = 's';
+	buf[0] = c;
+	buf[1] = (st_buf.st_mode & S_IRUSR)? 'r': '-';
+	buf[2] = (st_buf.st_mode & S_IWUSR)? 'w': '-';
+	buf[3] = (st_buf.st_mode & S_IXUSR)? 'x': '-';
+	buf[4] = (st_buf.st_mode & S_IRGRP)? 'r': '-';
+	buf[5] = (st_buf.st_mode & S_IWGRP)? 'w': '-';
+	buf[6] = (st_buf.st_mode & S_IXGRP)? 'x': '-';
+	buf[7] = (st_buf.st_mode & S_IROTH)? 'r': '-';
+	buf[8] = (st_buf.st_mode & S_IWOTH)? 'w': '-';
+	buf[9] = (st_buf.st_mode & S_IXOTH)? 'x': '-';
+	buf[10] = '\0'; 
+	pwp = getpwuid(st_buf.st_uid);
+	grp = getgrgid(st_buf.st_gid);
+	tmp = localtime(&st_buf.st_mtime);
+	strftime(time_buf, 13, "%b %d %H %M", tmp);
+	sprintf(buf+10, " %3ld %-8s %-8s %8ld %s %s", st_buf.st_nlink, pwp->pw_name, grp->gr_name, st_buf.st_size, time_buf, fn);
+	if (S_ISLNK(st_buf.st_mode)) {
+		int len, bytes;
+		strcat(buf, " -> ");
+		len = strlen(buf);
+		bytes = readlink(full_path, buf+len, SZ_STR_BUF-len);
+		buf[len+bytes] = '\0';
+	}
+	printf("%s\n", buf);
+}
+
+static void print_detail(DIR *dp, char *path) {
+	struct dirent *dirp;
+
+	while ((dirp = readdir(dp)) != NULL) 
+		print_attr(path, dirp->d_name);	
+}
+
+static void get_max_name_len(DIR *dp, int *p_max_name_len, int *p_num_per_line) {
+	struct dirent *dirp;
+
+	int max_name_len = 0;
+
+	while((dirp = readdir(dp)) != NULL) {
+		int name_len = strlen(dirp->d_name);
+		if (name_len > max_name_len)
+			max_name_len = name_len;
+	}
+	rewinddir(dp);
+	max_name_len +=4;
+	*p_num_per_line = 80 / max_name_len;
+	*p_max_name_len = max_name_len;
+}
+
+static void print_name(DIR *dp) {
+	struct dirent *dirp;
+	int max_name_len, num_per_line, cnt = 0;
+	
+	get_max_name_len(dp, &max_name_len, &num_per_line);
+	
+	while((dirp=readdir(dp)) != NULL) {
+		printf("%-*s", max_name_len, dirp->d_name);
+		if((++cnt % num_per_line) == 0)
+			printf("\n");
+	}
+	if((++cnt % num_per_line) != 0)
+		printf("\n");
+}
 
 void help();
 
@@ -89,7 +176,18 @@ void hostname(void){
 
 }
 void ls(void) {
-	printf("현재 이 명령어는 구현되지 않았습니다.\n"); 
+	char *path;
+	DIR *dp;
+
+	path = (argc == 0) ? "." : argv[0];
+
+	if ((dp = opendir(path)) == NULL)
+		PRINT_ERR_RET();
+	if(optc == 0)
+		print_name(dp);
+	else
+		print_detail(dp, path);
+	closedir(dp);
 }
 void pwd(void) {
 	printf("%s \n", cur_work_dir); 
