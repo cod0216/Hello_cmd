@@ -158,6 +158,16 @@ static void print_name(DIR *dp) {
 
 void help();
 
+void cd(void) {
+	if(argc == 0)
+		argv[0] = "/home/cod0216";
+	if(chdir(argv[0]) <0)
+		PRINT_ERR_RET();
+	else
+		getcwd(cur_work_dir, SZ_STR_BUF);
+
+}
+
 void cp(void) {
 	printf("현재 이 명령어는 구현되지 않았습니다.\n"); 
 }
@@ -217,6 +227,7 @@ typedef struct {
 } cmd_tbl_t;
 
 cmd_tbl_t cmd_tbl [] = {
+	{ "cd",	cd,	AC_LESS_1,	"",	"[디렉토리이름]" },
 	{ "cp",	cp,	2,	"",	"원본파일 복사된 파일" },
 	{ "echo",	echo,	AC_ANY,	"",	"[에코할 문장]" },
 	{ "help", help, 0, "", "" },
