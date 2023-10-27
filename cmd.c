@@ -8,6 +8,7 @@
 #include <grp.h>
 #include <time.h>
 #include <sys/utsname.h>
+#include <sys/types.h>
 
 #define SZ_STR_BUF 256 // 일반 문자열 배열의 길이
 
@@ -169,6 +170,14 @@ void cd(void) {
 
 }
 
+void changemod(void) {
+	int mode;
+	sscanf(argv[0], "%o", &mode);
+	if(chmod(argv[1], (mode_t)mode) < 0)
+		PRINT_ERR_RET();
+
+}
+
 void cp(void) {
 	printf("현재 이 명령어는 구현되지 않았습니다.\n"); 
 }
@@ -208,12 +217,26 @@ void pwd(void) {
 }
 
 void rm(void) {
-	printf("현재 이 명령어는 구현되지 않았습니다.\n"); 
+	
+	struct stat buf;
+/*
+	if (lstat(argv[0], &buf) < 0)
+		PRINT_ERR_RET();
+
+	int ret;
+	if(S_ISDIR(buf.st_mode) ? ret = rmdir(argv[0]) :(ret = unlink(argv[0])) < 0 )
+		PRINT_ERR_RET();
+*/
+	int ret;
+	if ( (lstat(argv[0], &buf)) || (S_ISDIR(buf.st_mode) ? (ret =rmdir(argv[0])) : (ret = unlink(argv[0]) < 0)))
+		PRINT_ERR_RET();
+
 }
 
 void removedir(void) {
-	if (rmdir(argv[0]) < 0)
+if (rmdir(argv[0]) < 0)
 		PRINT_ERR_RET();
+
 }
 
 void quit(void) {
@@ -224,9 +247,14 @@ void makedir() {
 	if (mkdir(argv[0], 0755) < 0 )
 		PRINT_ERR_RET();
 }
+void mv(void) {
+	if((link(argv[0], argv[1]) < 0) || (unlink(argv[0]) < 0))
+		PRINT_ERR_RET();
+	
+}
 
 void whoami(void) {
-	char *username;
+char *username;
 	username = getlogin();
 	if (username == NULL)
 		printf("터미널 장치가 아니라서 사용자 계정정보를 구할 수 없습니다.\n");
@@ -252,6 +280,7 @@ typedef struct {
 
 cmd_tbl_t cmd_tbl [] = {
 	{ "cd",	cd,	AC_LESS_1,	"",	"[디렉토리이름]" },
+	{ "chmod", changemod, 2, "", "8진수모드값 파일이름"},
 	{ "cp",	cp,	2,	"",	"원본파일 복사된 파일" },
 	{ "echo",	echo,	AC_ANY,	"",	"[에코할 문장]" },
 	{ "help", help, 0, "", "" },
@@ -261,6 +290,7 @@ cmd_tbl_t cmd_tbl [] = {
 	{ "exit", quit, 0, "", "" },
 	{ "rm",	rm,	1,	"", "파일이름" },
 	{ "mkdir",	makedir,	1,	"", "디렉토리이름" },
+	{ "mv", mv, 2, "", "원본파일 바뀐이름" },
 	{ "whoami", whoami, 0, "", "" },
 	{ "uname", unixname, AC_LESS_1, "-a", ""},
 	{ "rmdir", removedir, 1, "", "디렉토리이름"},	
