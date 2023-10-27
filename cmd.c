@@ -211,6 +211,11 @@ void rm(void) {
 	printf("현재 이 명령어는 구현되지 않았습니다.\n"); 
 }
 
+void removedir(void) {
+	if (rmdir(argv[0]) < 0)
+		PRINT_ERR_RET();
+}
+
 void quit(void) {
 	exit(0);// exit(0)함수는 unix가 제공해준다
 }
@@ -258,7 +263,7 @@ cmd_tbl_t cmd_tbl [] = {
 	{ "mkdir",	makedir,	1,	"", "디렉토리이름" },
 	{ "whoami", whoami, 0, "", "" },
 	{ "uname", unixname, AC_LESS_1, "-a", ""},
-	
+	{ "rmdir", removedir, 1, "", "디렉토리이름"},	
 };
 
 int num_cmd = sizeof(cmd_tbl) / sizeof(cmd_tbl[0]); // 전체크기 vs 한칸의 크기
