@@ -180,12 +180,14 @@ void echo(void) {
 	printf("\n");
 
 }
+
 void hostname(void){
 	char hostname[SZ_STR_BUF];
 	gethostname(hostname, SZ_STR_BUF);
 	printf("%s \n", hostname);
 
 }
+
 void ls(void) {
 	char *path;
 	DIR *dp;
@@ -200,9 +202,11 @@ void ls(void) {
 		print_detail(dp, path);
 	closedir(dp);
 }
+
 void pwd(void) {
 	printf("%s \n", cur_work_dir); 
 }
+
 void rm(void) {
 	printf("현재 이 명령어는 구현되지 않았습니다.\n"); 
 }
@@ -210,6 +214,12 @@ void rm(void) {
 void quit(void) {
 	exit(0);// exit(0)함수는 unix가 제공해준다
 }
+
+void makedir() {
+	if (mkdir(argv[0], 0755) < 0 )
+		PRINT_ERR_RET();
+}
+
 void whoami(void) {
 	char *username;
 	username = getlogin();
@@ -245,8 +255,10 @@ cmd_tbl_t cmd_tbl [] = {
 	{ "pwd",	pwd,	0,	"",	"" },
 	{ "exit", quit, 0, "", "" },
 	{ "rm",	rm,	1,	"", "파일이름" },
+	{ "mkdir",	makedir,	1,	"", "디렉토리이름" },
 	{ "whoami", whoami, 0, "", "" },
 	{ "uname", unixname, AC_LESS_1, "-a", ""},
+	
 };
 
 int num_cmd = sizeof(cmd_tbl) / sizeof(cmd_tbl[0]); // 전체크기 vs 한칸의 크기
