@@ -7,6 +7,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <time.h>
+#include <sys/utsname.h>
 
 #define SZ_STR_BUF 256 // 일반 문자열 배열의 길이
 
@@ -218,6 +219,14 @@ void whoami(void) {
 		printf("%s \n", username);
 }
 
+void unixname() {
+	struct utsname un;
+	uname(&un);
+	if ( optc == 1)
+		printf("%s %s %s %s %s \n", un.sysname, un.nodename, un.release, un.version, un.machine);
+	else printf("%s \n", un.sysname);
+}	
+
 typedef struct {
 	char *cmd;					//명령어 문자열 시작 주소
 	void (*func)(void);	//명령어 처리하는 함수 포인터(함수 이름, 명령어 주소)
@@ -237,6 +246,7 @@ cmd_tbl_t cmd_tbl [] = {
 	{ "exit", quit, 0, "", "" },
 	{ "rm",	rm,	1,	"", "파일이름" },
 	{ "whoami", whoami, 0, "", "" },
+	{ "uname", unixname, AC_LESS_1, "-a", ""},
 };
 
 int num_cmd = sizeof(cmd_tbl) / sizeof(cmd_tbl[0]); // 전체크기 vs 한칸의 크기
