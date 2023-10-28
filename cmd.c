@@ -9,6 +9,8 @@
 #include <time.h>
 #include <sys/utsname.h>
 #include <sys/types.h>
+#include <uuid/uuid.h>
+
 
 #define SZ_STR_BUF 256 // 일반 문자열 배열의 길이
 
@@ -39,6 +41,7 @@ static int check_arg(int count) {
 		if(argc <= count)
 			return(0);
 	}
+	
 	if (argc == count)
 		return 0;
 
@@ -48,6 +51,7 @@ static int check_arg(int count) {
 	else 
 		printf("명령어 인자의 수가 부족합니다.\n");
 	return -1;
+
 }
 
 static int check_opt(char *opt) {
@@ -161,8 +165,11 @@ static void print_name(DIR *dp) {
 void help();
 
 void cd(void) {
-	if(argc == 0)
-		argv[0] = "/home/cod0216";
+	if(argc == 0) {
+		struct passwd *pwp;
+		pwp = getpwuid(getuid());
+		argv[0] = pwp->pw_dir;
+	}
 	if(chdir(argv[0]) <0)
 		PRINT_ERR_RET();
 	else
@@ -254,12 +261,18 @@ void mv(void) {
 }
 
 void whoami(void) {
-char *username;
+/*char *username;
 	username = getlogin();
 	if (username == NULL)
 		printf("터미널 장치가 아니라서 사용자 계정정보를 구할 수 없습니다.\n");
 	else
 		printf("%s \n", username);
+*/
+
+	struct passwd *pwp;
+	pwp = getpwuid(getuid());
+	printf("%s \n", pwp->pw_name);
+
 }
 
 void unixname() {
