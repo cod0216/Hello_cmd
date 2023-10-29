@@ -189,6 +189,18 @@ void cp(void) {
 	printf("현재 이 명령어는 구현되지 않았습니다.\n"); 
 }
 	
+void date(void) {
+	char stm[128];
+	time_t ttm = time(NULL);
+	struct tm *ltm = localtime(&ttm);
+	char *atm = asctime(ltm);
+	char *ctm = ctime(&ttm);
+	strftime(stm, 128, "stm : %a %b %d %H:%M:%S %Y", ltm);
+	printf("atm : %s", atm);
+	printf("ctm : %s", ctm);
+	puts(stm); 
+}
+
 void echo(void) {
 	int i;
 	for(i = 0; i < argv[i]; i++)
@@ -201,6 +213,38 @@ void hostname(void){
 	char hostname[SZ_STR_BUF];
 	gethostname(hostname, SZ_STR_BUF);
 	printf("%s \n", hostname);
+
+}
+
+void id() {
+	struct passwd *pwp;
+	struct group *grp;
+
+	/*if (argc == 1)
+		pwp = getpwnam(argv[0]);
+
+	else
+		pwp = getpwuid(getuid());
+
+	if ( pwp == NULL )	{
+		printf( " id : 잘못된 사용자 이름 :  \" %s \" \n", argv[0]);
+		return ;
+	}
+
+	grp = getgrgid(pwp->pw_gid);
+	if (grp == NULL) {
+		printf( " id : 잘못된 사용자 이름 :  \" %s \" \n", argv[0]);
+		return ;
+	}
+*/
+
+	pwp = ((argc == 1) ? getpwnam(argv[0]) : getpwuid(getuid()));
+	
+	if (( pwp == NULL) || ( (grp = getgrgid(pwp->pw_gid)) == NULL)) {
+		printf( " id : 잘못된 사용자 이름 :  \" %s \" \n", argv[0]);
+		return ;
+	}
+	printf(" uid=%d(%s) gid=%d(%s) 그룹들=%d(%s) \n", pwp->pw_uid, pwp->pw_name, grp->gr_gid, grp->gr_name, grp->gr_gid, grp->gr_name);
 
 }
 
@@ -295,9 +339,11 @@ cmd_tbl_t cmd_tbl [] = {
 	{ "cd",	cd,	AC_LESS_1,	"",	"[디렉토리이름]" },
 	{ "chmod", changemod, 2, "", "8진수모드값 파일이름"},
 	{ "cp",	cp,	2,	"",	"원본파일 복사된 파일" },
+	{ "date", date, 0, "" , "" },
 	{ "echo",	echo,	AC_ANY,	"",	"[에코할 문장]" },
 	{ "help", help, 0, "", "" },
 	{ "hostname", hostname, 0, "", "" },
+	{ "id", id, AC_LESS_1, "", "[계정이름]" },
 	{ "ls",	ls,	AC_LESS_1,	"-l",	"[디렉토리이름]" },
 	{ "pwd",	pwd,	0,	"",	"" },
 	{ "exit", quit, 0, "", "" },
