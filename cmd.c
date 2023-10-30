@@ -9,7 +9,11 @@
 #include <time.h>
 #include <sys/utsname.h>
 #include <sys/types.h>
-#include <uuid/uuid.h>
+#include <utime.h>
+#include <errno.h>
+#include <fcntl.h>
+
+
 
 
 #define SZ_STR_BUF 256 // 일반 문자열 배열의 길이
@@ -304,6 +308,24 @@ void mv(void) {
 	
 }
 
+void touch(void) {
+	
+	int fd;
+
+	if((utime(argv[0], NULL)) == 0)
+		return;
+
+	if (errno != ENOENT) {
+		PRINT_ERR_RET();
+	}
+
+	if((fd = creat(argv[0], 0644)) < 0)
+		PRINT_ERR_RET();
+
+	close(fd);
+
+}
+
 void whoami(void) {
 /*char *username;
 	username = getlogin();
@@ -350,6 +372,7 @@ cmd_tbl_t cmd_tbl [] = {
 	{ "rm",	rm,	1,	"", "파일이름" },
 	{ "mkdir",	makedir,	1,	"", "디렉토리이름" },
 	{ "mv", mv, 2, "", "원본파일 바뀐이름" },
+	{ "touch",	touch,	1,	"", "파일이름" },
 	{ "whoami", whoami, 0, "", "" },
 	{ "uname", unixname, AC_LESS_1, "-a", ""},
 	{ "rmdir", removedir, 1, "", "디렉토리이름"},	
