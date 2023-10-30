@@ -15,8 +15,8 @@
 
 
 
-
-#define SZ_STR_BUF 256 // 일반 문자열 배열의 길이
+#define SZ_FILE_BUF 8192 
+#define SZ_STR_BUF 256 
 
 char *cmd;
 char *argv[100];
@@ -162,11 +162,29 @@ static void print_name(DIR *dp) {
 		if((++cnt % num_per_line) == 0)
 			printf("\n");
 	}
-	if((++cnt % num_per_line) != 0)
+	if((cnt % num_per_line) != 0)
 		printf("\n");
 }
 
 void help();
+
+void cat(void) {
+	int fd, len;
+	char buf[SZ_FILE_BUF];
+
+	if((fd = open(argv[0], O_RDONLY)) < 0)
+		PRINT_ERR_RET();
+	while ((len = read(fd, buf, SZ_FILE_BUF)) > 0) {
+		if (write(STDOUT_FILENO, buf, len) != len) {
+			len = -1;
+			break;
+	}
+	if (len < 0 )
+		perror(cmd);
+	close(fd);
+	printf("\n");
+	}
+}
 
 void cd(void) {
 	if(argc == 0) {
@@ -358,6 +376,7 @@ typedef struct {
 } cmd_tbl_t;
 
 cmd_tbl_t cmd_tbl [] = {
+	{ "cat",	cat,	1,	"", "파일이름" },
 	{ "cd",	cd,	AC_LESS_1,	"",	"[디렉토리이름]" },
 	{ "chmod", changemod, 2, "", "8진수모드값 파일이름"},
 	{ "cp",	cp,	2,	"",	"원본파일 복사된 파일" },
