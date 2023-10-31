@@ -15,7 +15,7 @@
 
 
 
-#define SZ_FILE_BUF 8192 
+#define SZ_FILE_BUF 1024 
 #define SZ_STR_BUF 256 
 
 char *cmd;
@@ -178,12 +178,11 @@ void cat(void) {
 		if (write(STDOUT_FILENO, buf, len) != len) {
 			len = -1;
 			break;
+		}
 	}
 	if (len < 0 )
 		perror(cmd);
 	close(fd);
-	printf("\n");
-	}
 }
 
 void cd(void) {
@@ -208,7 +207,27 @@ void changemod(void) {
 }
 
 void cp(void) {
-	printf("현재 이 명령어는 구현되지 않았습니다.\n"); 
+	int rfd, wfd, len;
+	char buf[SZ_FILE_BUF];
+	struct stat st_buf;
+
+	if ((stat(argv[0], &st_buf) < 0) || ((rfd = open(argv[0], O_RDONLY)) < 0))
+		PRINT_ERR_RET();
+	if((wfd = creat(argv[1], st_buf.st_mode)) < 0) {
+			perror(cmd);
+			close(rfd);
+			return;
+	}
+	while ((len = read(rfd, buf, SZ_FILE_BUF)) > 0 ) {
+		if(write(wfd, buf, len) != len) {
+			len = -1;
+			break;
+		}
+	}
+	if (len < 0 )
+		perror(cmd);
+	close(rfd);
+	close(wfd);
 }
 	
 void date(void) {
