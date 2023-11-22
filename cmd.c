@@ -12,6 +12,7 @@
 #include <utime.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <sys/wait.h>
 
 
 
@@ -23,7 +24,6 @@ char *argv[100];
 char *optv[10];
 int argc, optc;
 char cur_work_dir[SZ_STR_BUF]; // 현재 디렉토리 위치 저장용
-
 #define AC_LESS_1 -1 //명령어 인자 개수가 0 또는 1인 경우
 #define AC_ANY -100 //명령어 인자 개수 제한 없는 경우 (echo처럼)
 #define EQUAL(_s1, _s2) (strcmp(_s1, _s2) == 0) // 문자열이 같으면 ture
@@ -426,6 +426,32 @@ void help() {
 	printf("\n");
 }
 
+void run_cmd() {
+	pid_t pid;
+	if((pid = fork()) < 0)
+		PRINT_ERR_RET();
+
+	else if (pid == 0) {
+		int i, cnt = 0;
+		char *nargv[100];
+		nargv[cnt++] = cmd;
+		for (i = 0; i< optc; ++i)
+			nargv[cnt++] = optv[i];
+		for (i = 0; i< argc; ++i)
+			nargv[cnt++] = argv[i];
+		nargv[cnt++] = NULL;
+
+		if ( execvp(cmd,nargv) < 0) {
+			perror(cmd);
+			exit(1);
+		}
+	}
+	else {
+		if ( waitpid(pid, NULL, 0) < 0 )
+			PRINT_ERR_RET();
+	}
+}
+
 void proc_cmd() {
 	int k;
 	for (k = 0; k < num_cmd; ++k) { // 입력한 명령어 정보를 cmd_tbl[]에서 찾음
@@ -440,10 +466,9 @@ void proc_cmd() {
 			return;
 		}
 	}
-	printf("%s : 지원되지 않은 명령어 입니다.\n", cmd);
+	run_cmd();
 }
 	
-
 int main(int argc, char *argv[]) {
 	int cmd_count = 1;
 	char cmd_line[SZ_STR_BUF];
